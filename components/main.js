@@ -32,8 +32,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#161419'
   },
-  promptText: {
+  promptTextLocked: {
     color: '#cf0000',
+    fontSize: 25
+  },
+  promptTextUnlocked: {
+    color: '#228B22',
     fontSize: 25
   },
   keypadKeyButton: {
@@ -44,21 +48,31 @@ const styles = StyleSheet.create({
   }
 });
 
-let isAuthorized = false;
 
 class Main extends Component {
   constructor(props) {
     super(props);
     this._touchIDHandler = this._touchIDHandler.bind(this);
     this._touchIDSupported = this._touchIDSupported.bind(this);
+    this._renderPrompt = this._renderPrompt.bind(this);
+
+    this.state = {
+      isAuthorized : false
+    };
   }
 
   _touchIDSupported() {
+
+    if(this.state.isAuthorized) {
+      this.setState({isAuthorized : false});
+      return;
+    }
+
     return(
-      TouchID.authenticate('to demo this react-native component')
+      TouchID.authenticate('Place finger on TouchID sensor')
         .then(success => {
           AlertIOS.alert('Authenticated Successfully');
-          isAuthorized = true;
+          this.setState({isAuthorized : true});
         })
         .catch(error => {
           AlertIOS.alert('Authentication Failed');
@@ -74,28 +88,48 @@ class Main extends Component {
     .catch(function(error) {
       AlertIOS.alert('TouchID not supported');
     });
+  }
 
+  _renderPrompt() {
+    const prompt = this.state.isAuthorized ? 'Unlocked' : 'Locked';
+    
+    if (this.state.isAuthorized) {
+      return (
+        <View>
+          <Text style={styles.promptTextUnlocked}>
+            {prompt}
+          </Text>
+        </View>
+      );
+    } else {
+      return (
+        <View>
+          <Text style={styles.promptTextLocked}>
+            {prompt}
+          </Text>
+        </View>
+      );
+    }
   }
 
 
 
   render() {
-    const prompt = isAuthorized ? 'Unlocked' : 'Locked';
+    console.log('isAUTH', this.state.isAuthorized);
+    const renderPrompt = this._renderPrompt();
     return (
       <View style={styles.container}>
       <StatusBar hidden={true} />
         <TouchableHighlight
           onPress={this._touchIDHandler}
         >
-          <Text style={styles.promptText}>
-            {prompt}
-          </Text>
+          {renderPrompt}
         </TouchableHighlight>
       </View>
     );
   }
 
-};
+}
 
 
 
